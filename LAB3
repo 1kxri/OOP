@@ -148,7 +148,6 @@ int main() {
         cout << "\nОбратная матрица:" << endl;
         printMatrix(inverse);
 
-катя, [01.03.2025 0:49]
 // Умножение исходной матрицы на обратную
         multiply(doubleMatrix, inverse, result);
         cout << "\nРезультат умножения исходной матрицы на обратную:" << endl;
