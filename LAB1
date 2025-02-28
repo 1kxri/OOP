@@ -1,0 +1,185 @@
+#include <iostream>
+#include <cmath>
+#include <locale>
+#define pi 3.14
+#define eps 0.001
+#define x_min -1.0
+#define x_max 1.0
+using namespace std;
+
+int main() {
+    setlocale(LC_ALL, "");
+    int choice;
+
+    do {
+        cout << "Выберите задание (1-10) или 0 для выхода: ";
+        cin >> choice;
+
+        if (choice == 1) {
+            float a, b, result;
+            cout << "#1\n";
+            cout << "Введите a: ";
+            cin >> a;
+            cout << "Введите b: ";
+            cin >> b;
+            result = atan((sin(a + pi)) / (cos(b + 2.87))) / sqrt(a + pow(cos(b), 2));
+            printf("Результат выражения равен %f\n", result);
+        }
+        else if (choice == 2) {
+            float x;
+            cout << "#2\n";
+            cout << "Введите x: ";
+            cin >> x;
+            while (x > x_min && x < x_max) {
+                double term = x;
+                double sum = term;
+                int n = 2;
+
+                while (true) {
+                    double prevTerm = term;
+                    term = term * (-x) / n;
+                    sum += term;
+                    if (abs(term - prevTerm) <= eps) {
+                        break;
+                    }
+                    n++;
+                }
+                cout << "F(" << x << ") = " << sum << endl;
+                cout << "Введите значение x: \n";
+                cin >> x;
+            }
+        }
+        else if (choice == 3) {
+            int n, j = 1;
+            cout << "#3.1\n";
+            cout << "Вводим n: ";
+            cin >> n;
+            while (j < n) {
+                if (n % j == 0) {
+                    cout << j << endl;
+                }
+                j++;
+            }
+        }
+        else if (choice == 4) {
+            float a, min, max, res;
+            int i = 2, n, a1, a2;
+            cout << "#3.2\n";
+            cout << "Введите a1 и a2: ";
+            cin >> a1 >> a2;
+            if (a1 > a2) {
+                max = a1;
+                min = a2;
+            }
+            else {
+                max = a2;
+                min = a1;
+            }
+            i = 3;
+            while (i < 100) {
+                cout << "a" << i << "=";
+                cin >> a;
+                if (a < min) min = a;
+                if (a > max) max = a;
+                i++;
+            }
+            res = max - min;
+            cout << "Разница между max и min: \n" << res << endl;
+        }
+        else if (choice == 5) {
+            int n, y = 1;
+            cout << "#3.3\n";
+            cout << "Введите n: ";
+            cin >> n;
+            if (n % 2 != 0) {
+                for (int i = 1; i <= n; i += 2) {
+                    y = y * i;
+                }
+            }
+            else {
+                for (int i = 2; i <= n; i += 2) {
+                    y = y * i;
+                }
+            }
+            cout << "Результат: \n" << y << endl;
+        }
+        else if (choice == 6) {
+            cout << "#3.4\n";
+            int k, x, m, n;
+            float s, rez = 0, rezs = 0;
+            cout << "n:, x: ";
+            cin >> n >> x;
+            for (k = 1; k <= n; k++) {
+                rez = 0;
+                for (m = 1; m <= n; m++) {
+                    s = (x + k) / (float)m;
+                    rez += s;
+                }
+                rezs += rez;
+            }
+            cout << rezs << endl;
+        }
+        else if (choice == 7) {
+            int i, j, n;
+            float s = 0.0, sum = 0.0;
+            cout << "#3.5\n";
+            cout << "Введите n: ";
+            cin >> n;
+            for (i = 1; i <= n; ++i) {
+                for (j = 1; j <= n; ++j) {
+                    s = 1.0 / (i + 2 * j);
+                    sum += s;
+                }
+            }
+            cout << "Сумма: \n" << sum << endl;
+        }
+        else if (choice == 8) {
+            int fac = 1, n;
+            float s = 0.0, sum = 0.0, zn = 0.0;
+            cout << "#3.6\n";
+            cout << "Введите n: ";
+            cin >> n;
+            for (int k = 1; k <= 10; ++k) {
+                for (int n = 1; n <= k; ++n) {
+                    s = s + sin(k * n);
+                }
+                fac *= k;
+                zn = s / fac;
+                sum = sum + zn;
+            }
+            cout << "Сумма: \n" << sum << endl;
+        }
+        else if (choice == 9) {
+            int n, i, l = 0;
+            float S;
+            cout << "#3.7\n";
+            cout << "Введите n: ";
+            cin >> n;
+            for (i = 1; i <= n; ++i) {
+                S = pow(i, 3) - 3 * i * pow(n, 2) + n;
+                if ((int)S % 3 == 0 && (int)S % 2 != 0) {
+                    l += S;
+                }
+            }
+            cout << "Result = \n" << l << endl;
+        }
+        else if (choice == 10) {
+            cout << "#4\n";
+            int X;
+            cout << "Введите X: ";
+            cin >> X;
+            if (X >= 0 && X <= 5)
+                cout << "yes\n";
+            else
+                cout << "no\n";
+        }
+        else if (choice == 0) {
+            cout << "Выход из программы." << endl;
+        }
+        else {
+            cout << "Неверный выбор, попробуйте снова." << endl;
+        }
+    } while (choice != 0);
+
+    return 0;
+}
