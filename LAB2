@@ -1,0 +1,154 @@
+#include <iostream>
+#include <cmath>
+#include <locale>
+#define N 100
+using namespace std;
+
+//Функция для сортировки методом прямого включения
+void insertionSort(float arr[], int size) {
+    for (int i = 1; i < size; ++i) {
+        float temp = arr[i];
+        int j = i - 1;
+        while (j >= 0 && arr[j] > temp) {
+            arr[j + 1] = arr[j];
+            j--;
+        }
+        arr[j + 1] = temp;
+    }
+}
+
+int main() {
+    setlocale(LC_ALL, "");
+    int choice;
+
+    do {
+        cout << "Выберите задание (1-3) или 0 для выхода: ";
+        cin >> choice;
+
+        if (choice == 1) {
+            float arr[N];
+            float n, max = arr[0];
+            int size;
+
+            cout << "Введите размерноcть массива N: ";
+            cin >> size;
+
+            cout << "Введите массив (N элементов): ";
+            for (int i = 0; i < size; i++) {
+                cin >> n;
+                arr[i] = n;
+            }
+
+            for (int i = 0; i < size; i++) {
+                cout << arr[i] << " ";
+            }
+
+            for (int i = 0; i < size; i++) {
+                if (arr[i] > max) {
+                    max = arr[i];
+                }
+
+
+            }
+            cout << "\nМаксимальный элемент: " << max;
+
+            float sum = 0;
+            int count = 0;
+            for (int i = 0; i < size; i++) {
+                if (arr[i] > 0) {
+                    sum += arr[i];
+                    count++;
+                }
+            }
+            float average = sum / count;
+            cout << "\nСреднеарифм. полож. элементов: " << average;
+
+            cout << "\nОтриц. элементы в обратном порядке: ";
+            int neg_count = 0;
+            for (int i = size - 1; i >= 0; --i) {
+                if (arr[i] < 0) {
+                    cout << arr[i] << ", ";
+                    neg_count++;
+                }
+            }
+            if (neg_count == 0) {
+                cout << "\nВ массиве нет отриц. элементов";
+            }
+        }
+        else if (choice == 2) {
+            const int rows = 5;
+            const int cols = 4;
+            int matrix[rows][cols];
+
+            cout << "Введите элементы матрицы " << rows << "x" << cols << ":\n";
+            for (int i = 0; i < rows; ++i) {
+                for (int j = 0; j < cols; ++j) {
+                    cin >> matrix[i][j];
+                }
+            }
+
+            int zeroRow = -1;
+            for (int i = 0; i < rows; ++i) {
+                for (int j = 0; j < cols; ++j) {
+                    if (matrix[i][j] == 0) {
+                        zeroRow = i;
+                        break;
+                    }
+                }
+                if (zeroRow != -1) {
+                    break;
+                }
+            }
+
+            if (zeroRow != -1) {
+                for (int j = 0; j < cols; ++j) {
+                    swap(matrix[0][j], matrix[zeroRow][j]);
+                }
+                cout << "Первая строка и строчку, в которой находится первый нуле-вой элемент\n";
+            }
+            else {
+                cout << "В матрице нет нулевых элементов\n";
+            }
+
+            cout << "Измененная матрица:\n";
+            for (int i = 0; i < rows; ++i) {
+                for (int j = 0; j < cols; ++j) {
+                    cout << matrix[i][j] << " ";
+                }
+            }
+
+        }
+        else if (choice == 3) {
+            float array[N];
+            int size;
+
+            cout << "Введите размерность массива N: ";
+            cin >> size;
+
+            if (size <= 0 || size > N) {
+                cout << "Некорректный размер массива!";
+                continue;
+            }
+
+            cout << "Введите массив (N элементов): ";
+            for (int i = 0; i < size; i++) {
+                cin >> array[i];
+            }
+
+            insertionSort(array, size);
+
+            cout << "Отсортированный массив: ";
+            for (int i = 0; i < size; ++i) {
+                cout << array[i] << " ";
+            }
+        }
+        else if (choice == 0) {
+            cout << "Выход из программы.";
+        }
+        else {
+            cout << "Неверный выбор, попробуйте снова.";
+        }
+    } while (choice != 0);
+
+    return 0;
+}
