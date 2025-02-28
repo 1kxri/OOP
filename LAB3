@@ -1,0 +1,163 @@
+катя, [01.03.2025 0:49]
+#include <iostream>
+#include <cmath>
+#include <locale>
+#include <iomanip>
+#define N 5
+using namespace std;
+
+// Функция для заполнения матрицы
+void fill(int matrix[N][N]) {
+    int num = 1;
+    for (int col = 0; col < N; ++col) {
+        if (col % 2 == 0) {
+            for (int row = 0; row < N; ++row) {
+                matrix[row][col] = num++;
+            }
+        }
+        else {
+            for (int row = N - 1; row >= 0; --row) {
+                matrix[row][col] = num++;
+            }
+        }
+    }
+}
+
+// Функция для вывода целочисленной матрицы
+void printMatrix(const int matrix[N][N]) {
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            cout << setw(4) << matrix[i][j];
+        }
+        cout << "\n";
+    }
+}
+
+// Функция для вывода матрицы с плавающей точкой
+void printMatrix(const double matrix[N][N]) {
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            cout << setw(4) << matrix[i][j];
+        }
+        cout << "\n";
+    }
+}
+
+// Функция для вычисления определителя
+double det(double matrix[N][N], int size) {
+    if (size == 1) {
+        return matrix[0][0];
+    }
+    double d = 0;
+    double submatrix[N][N];
+    for (int x = 0; x < size; ++x) {
+        int subi = 0;
+        for (int i = 1; i < size; ++i) {
+            int subj = 0;
+            for (int j = 0; j < size; ++j) {
+                if (j == x) continue;
+                submatrix[subi][subj] = matrix[i][j];
+                subj++;
+            }
+            subi++;
+        }
+        d += (x % 2 == 0 ? 1 : -1) * matrix[0][x] * det(submatrix, size - 1);
+    }
+    return d;
+}
+
+// Функция для нахождения обратной матрицы
+bool inverseMatrix(double matrix[N][N], double inv[N][N]) {
+    double d = det(matrix, N);
+    if (d == 0) {
+        return false; // Обратной матрицы не существует
+    }
+
+    double temp[N][N * 2] = { 0 };
+
+    // Копируем исходную матрицу и инициализируем расширенную матрицу
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            temp[i][j] = matrix[i][j];
+        }
+        temp[i][i + N] = 1; // Единичная матрица справа
+    }
+
+    // Метод Гаусса-Жордана
+    for (int i = 0; i < N; ++i) {
+        // Нормализация текущей строки
+        double pivot = temp[i][i];
+        for (int j = 0; j < 2 * N; ++j) {
+            temp[i][j] /= pivot;
+        }
+
+        // Обнуление элементов в текущем столбце
+        for (int k = 0; k < N; ++k) {
+            if (k != i) {
+                double element = temp[k][i];
+                for (int j = 0; j < 2 * N; ++j) {
+                    temp[k][j] -= element * temp[i][j];
+                }
+            }
+        }
+    }
+
+    // Копируем обратную матрицу из расширенной матрицы
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            inv[i][j] = temp[i][j + N];
+        }
+    }
+
+    return true;
+}
+
+// Функция для умножения матриц
+void multiply(const double A[N][N], const double B[N][N], double result[N][N]) {
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            result[i][j] = 0;
+            for (int k = 0; k < N; ++k) {
+                result[i][j] += A[i][k] * B[k][j];
+            }
+        }
+    }
+}
+
+int main() {
+    setlocale(LC_ALL, "");
+
+    int matrix[N][N];
+    double doubleMatrix[N][N];
+    double inverse[N][N];
+    double result[N][N];
+
+    // Заполнение матрицы
+    fill(matrix);
+    cout << "Исходная матрица:" << endl;
+    printMatrix(matrix);
+
+    // Преобразуем матрицу в double для вычисления обратной
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            doubleMatrix[i][j] = static_cast<double>(matrix[i][j]);
+        }
+    }
+
+    // Нахождение обратной матрицы
+    if (inverseMatrix(doubleMatrix, inverse)) {
+        cout << "\nОбратная матрица:" << endl;
+        printMatrix(inverse);
+
+катя, [01.03.2025 0:49]
+// Умножение исходной матрицы на обратную
+        multiply(doubleMatrix, inverse, result);
+        cout << "\nРезультат умножения исходной матрицы на обратную:" << endl;
+        printMatrix(result);
+    }
+    else {
+        cout << "\nОбратной матрицы не существует (матрица вырожденная)." << endl;
+    }
+
+    return 0;
+}
