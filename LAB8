@@ -1,0 +1,64 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+
+// Класс исключения для ошибок работы с файлами
+class FileException : public std::exception {
+private:
+    std::string message;
+public:
+    FileException(const std::string& msg) : message(msg) {}
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
+};
+
+void writeToReadOnlyFile() {
+    std::string filename = "readonly.txt";
+
+    // Создаем файл только для чтения (если его нет)
+    std::ofstream createFile(filename);
+    createFile << "Этот файл только для чтения\n";
+    createFile.close();
+
+    // Устанавливаем атрибуты файла только для чтения
+#ifdef _WIN32
+    system(("attrib +R " + filename).c_str());
+#else
+    system(("chmod 444 " + filename).c_str());
+#endif
+
+    try {
+        // Пытаемся открыть файл для записи
+        std::ofstream outFile(filename, std::ios::app);
+
+        if (!outFile) {
+            throw FileException("Не удалось открыть файл: " + filename);
+        }
+
+        // Попытка записи в файл (должна вызвать исключение)
+        outFile << "Попытка записать в файл\n";
+
+        outFile.close();
+    }
+    catch (const std::ios_base::failure& e) {
+        throw FileException("Ошибка ввода-вывода при работе с файлом: " + std::string(e.what()));
+    }
+}
+
+int main() {
+    setlocale(LC_ALL, "RUS");
+    try {
+        writeToReadOnlyFile();
+        std::cout << "Запись в файл прошла успешно\n";
+    }
+    catch (const FileException& e) {
+        std::cerr << "Поймано исключение: " << e.what() << std::endl;
+        std::cerr << "Действие: Файл открыт только для чтения, запись невозможна\n";
+    }
+    catch (...) {
+        std::cerr << "Поймано неизвестное исключение\n";
+    }
+
+    return 0;
+}
