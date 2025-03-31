@@ -1,0 +1,118 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <locale>
+
+using namespace std;
+
+// Структура для хранения информации о поездах
+struct TRAIN {
+    string NUMR;   // Номер поезда
+    string TIME;   // Время отправления
+    string NAZN;   // Название пункта назначения
+    string OTPR;   // Название пункта отправления
+};
+
+// Функция для подсчета точек в строке
+void countDots() {
+    string input;
+    while (true) {
+        cout << "Введите строку (или 'quit' для выхода): ";
+        getline(cin, input);
+        if (input == "quit") {
+            break;
+        }
+        int dotCount = count(input.begin(), input.end(), '.');
+        cout << "Количество точек в строке: " << dotCount << endl;
+    }
+}
+
+// Функция для обмена четных и нечетных строк в файле
+void swapLinesInFile(const string& inputFile, const string& outputFile) {
+    ifstream inFile(inputFile);
+    if (!inFile.is_open()) {
+        cerr << "Ошибка открытия файла " << inputFile << endl;
+        return;
+    }
+
+    vector<string> lines;
+    string line;
+    while (getline(inFile, line)) {
+        lines.push_back(line);
+    }
+    inFile.close();
+
+    if (lines.size() < 30) {
+        cerr << "Ошибка: В файле должно быть не менее 30 строк!" << endl;
+        return;
+    }
+
+    ofstream outFile(outputFile);
+    if (!outFile.is_open()) {
+        cerr << "Ошибка создания файла " << outputFile << endl;
+        return;
+    }
+
+    for (size_t i = 0; i < lines.size(); i += 2) {
+        if (i + 1 < lines.size()) {
+            outFile << lines[i + 1] << endl;  // Нечетная строка
+        }
+        outFile << lines[i] << endl;  // Четная строка
+    }
+
+    cout << "Файл " << outputFile << " успешно записан." << endl;
+}
+
+// Функция для ввода и вывода информации о поездах
+void trainInfo() {
+    TRAIN RASP[6];
+
+    // Ввод данных о поездах
+    cin.ignore();  // Очистка буфера перед использованием getline
+    for (int i = 0; i < 6; ++i) {
+        cout << "Введите данные о поезде " << (i + 1) << ":\n";
+        cout << "Номер поезда: ";
+        getline(cin, RASP[i].NUMR);
+        cout << "Время отправления: ";
+        getline(cin, RASP[i].TIME);
+        cout << "Пункт назначения: ";
+        getline(cin, RASP[i].NAZN);
+        cout << "Пункт отправления: ";
+        getline(cin, RASP[i].OTPR);
+    }
+
+    // Поиск поездов по пункту назначения
+    string destination;
+    cout << "Введите пункт назначения для поиска: ";
+    getline(cin, destination);
+
+    bool found = false;
+    cout << "Поезда, направляющиеся в " << destination << ":\n";
+    for (const auto& train : RASP) {
+        if (train.NAZN == destination) {
+            cout << "Номер поезда: " << train.NUMR << ", Время: " << train.TIME
+                << ", Отправление: " << train.OTPR << endl;
+            found = true;
+        }
+    }
+
+    if (!found) {
+        cout << "Поездов в пункт назначения " << destination << " не найдено." << endl;
+    }
+}
+
+int main() {
+    setlocale(LC_CTYPE, "");  // Устанавливаем русскую локаль
+
+    // Задача 1: Подсчет точек в строке
+    countDots();
+
+    // Задача 2: Обмен четных и нечетных строк в файле
+    swapLinesInFile("input.txt", "output.txt");
+
+    // Задача 3: Информация о поездах
+    trainInfo();
+
+    return 0;
+}
