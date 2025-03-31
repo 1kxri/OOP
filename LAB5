@@ -1,0 +1,113 @@
+#include <iostream>
+#include <stdexcept>
+#include <locale>
+
+using namespace std;
+class Rectangle {
+private:
+    int a; // Длина первой стороны
+    int b; // Длина второй стороны
+
+public:
+    // Конструктор
+    Rectangle(int lengthA, int lengthB) : a(lengthA), b(lengthB) {}
+
+    // Метод для вывода сторон
+    void displaySides() const {
+        std::cout << "Стороны прямоугольника: a = " << a << ", b = " << b << std::endl;
+    }
+
+    // Метод для расчета периметра
+    int perimeter() const {
+        return 2 * (a + b);
+    }
+
+    // Метод для расчета площади
+    int area() const {
+        return a * b;
+    }
+
+    // Свойства для доступа к длинам сторон
+    int getA() const { return a; }
+    int getB() const { return b; }
+    void setA(int lengthA) { a = lengthA; }
+    void setB(int lengthB) { b = lengthB; }
+
+    // Свойство для проверки, является ли прямоугольник квадратом
+    bool isSquare() const {
+        return a == b;
+    }
+
+    // Индексатор
+    int& operator[](int index) {
+        if (index == 0) return a;
+        if (index == 1) return b;
+        throw std::out_of_range("Индекс должен быть 0 или 1.");
+    }
+
+    // Перегрузка оператора ++
+    Rectangle& operator++() {
+        ++a;
+        ++b;
+        return *this;
+    }
+
+    // Перегрузка оператора --
+    Rectangle& operator--() {
+        --a;
+        --b;
+        return *this;
+    }
+
+    // Перегрузка оператора true/false
+    operator bool() const {
+        return isSquare();
+    }
+
+    // Перегрузка оператора *
+    Rectangle operator*(int scalar) const {
+        return Rectangle(a * scalar, b * scalar);
+    }
+};
+
+int main() {
+    setlocale(LC_CTYPE, "");  
+    Rectangle rect(4, 5);
+
+    // Вывод сторон
+    rect.displaySides();
+
+    // Вычисление периметра и площади
+    std::cout << "Периметр: " << rect.perimeter() << std::endl;
+    std::cout << "Площадь: " << rect.area() << std::endl;
+
+    // Проверка, является ли прямоугольник квадратом
+    std::cout << "Является ли квадратом: " << (rect ? "Да" : "Нет") << std::endl;
+
+    // Изменение сторон
+    rect.setA(5);
+    rect.setB(5);
+    std::cout << "После изменения сторон:" << std::endl;
+    rect.displaySides();
+    std::cout << "Является ли квадратом: " << (rect ? "Да" : "Нет") << std::endl;
+
+    // Использование индексатора
+    std::cout << "Сторона a через индексатор: " << rect[0] << std::endl;
+    std::cout << "Сторона b через индексатор: " << rect[1] << std::endl;
+
+    // Перегрузка операторов ++ и --
+    ++rect;
+    std::cout << "После увеличения сторон на 1:" << std::endl;
+    rect.displaySides();
+
+    --rect;
+    std::cout << "После уменьшения сторон на 1:" << std::endl;
+    rect.displaySides();
+
+    // Перегрузка оператора *
+    Rectangle scaledRect = rect * 2;
+    std::cout << "После умножения сторон на 2:" << std::endl;
+    scaledRect.displaySides();
+
+    return 0;
+}
