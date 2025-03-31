@@ -1,0 +1,265 @@
+#include <cassert>
+#include <iostream>
+#include <vector>
+using namespace std;
+
+//Часть 1
+struct Expression {
+    virtual ~Expression() = default;
+    virtual double evaluate() const = 0;
+};
+
+struct Number : Expression {
+    Number(double value) : value_(value) {}
+    double value() const { return value_; }
+    double evaluate() const override { return value_; }
+
+private:
+    double value_;
+};
+
+struct BinaryOperation : Expression {
+    enum {
+        PLUS = '+',
+        MINUS = '-',
+        DIV = '/',
+        MUL = '*'
+    };
+
+    BinaryOperation(Expression const* left, int op, Expression const* right)
+        : left_(left), op_(op), right_(right) {
+        assert(left_ && right_);
+    }
+
+    ~BinaryOperation() override {
+        delete left_;
+        delete right_;
+    }
+
+    Expression const* left() const { return left_; }
+    Expression const* right() const { return right_; }
+    int operation() const { return op_; }
+
+    double evaluate() const override {
+        double left = left_->evaluate();
+        double right = right_->evaluate();
+        switch (op_) {
+        case PLUS: return left + right;
+        case MINUS: return left - right;
+        case DIV: return left / right;
+        case MUL: return left * right;
+        }
+        assert(0);
+        return 0.0;
+    }
+
+private:
+    Expression const* left_;
+    Expression const* right_;
+    int op_;
+};
+
+
+//Часть 2
+struct FunctionCall : Expression {
+    FunctionCall(const std::string& name, Expression const* arg)
+        : name_(name), arg_(arg) {
+        assert(arg_);
+    }
+
+    ~FunctionCall() override {
+        delete arg_;
+    }
+
+    std::string const& name() const {
+        return name_;
+    }
+
+    Expression const* arg() const {
+        return arg_;
+    }
+
+    double evaluate() const override {
+        double argValue = arg_->evaluate();
+        if (name_ == "sqrt") {
+            return sqrt(argValue);
+        }
+        else if (name_ == "abs") {
+            return fabs(argValue);
+        }
+        assert(0);
+        return 0.0;
+    }
+
+private:
+    std::string name_;
+    Expression const* arg_;
+};
+
+//Часть 3
+// Абстрактный базовый класс Passenger
+class Passenger {
+public:
+    virtual ~Passenger() {}
+    virtual double fare() const = 0; 
+    virtual string type() const = 0; 
+};
+
+// Класс для пассажира с билетом
+class TicketPassenger : public Passenger {
+public:
+    TicketPassenger(double ticketPrice) : ticketPrice_(ticketPrice) {}
+
+    double fare() const override {
+        return ticketPrice_;
+    }
+
+    string type() const override {
+        return "Ticket Passenger";
+    }
+
+private:
+    double ticketPrice_;
+};
+
+// Класс для пассажира с льготной сезонкой
+class DiscountPass : public Passenger {
+public:
+    DiscountPass(double discountPrice) : discountPrice_(discountPrice) {}
+
+    double fare() const override {
+        return discountPrice_;
+    }
+
+    string type() const override {
+        return "Discount Pass Passenger";
+    }
+
+private:
+    double discountPrice_;
+};
+
+// Класс для пассажира с транспортной картой
+class TransportCard : public Passenger {
+public:
+    TransportCard(double cardPrice) : cardPrice_(cardPrice) {}
+
+    double fare() const override {
+        return cardPrice_;
+    }
+
+    string type() const override {
+        return "Transport Card Passenger";
+    }
+
+private:
+    double cardPrice_;
+};
+
+// Класс для "зайца"
+class Freeloader : public Passenger {
+public:
+    double fare() const override {
+        return 0.0; 
+    }
+
+    string type() const override {
+        return "Freeloader";
+    }
+};
+
+// Функция для ввода данных о пассажирах
+void inputPassengers(vector<shared_ptr<Passenger>>& passengers) {
+    int count;
+    cout << "Введите количество пассажиров: ";
+    cin >> count;
+
+    for (int i = 0; i < count; ++i) {
+        int type;
+        cout << "Введите тип пассажира (1 - Билет, 2 - Льготная сезонка, 3 - Транспортная карта, 4 - Заяц): ";
+        cin >> type;
+
+        if (type == 1) {
+            double price;
+            cout << "Введите цену билета: ";
+            cin >> price;
+            passengers.push_back(make_shared<TicketPassenger>(price));
+        }
+        else if (type == 2) {
+            double price;
+            cout << "Введите цену льготной сезонки: ";
+            cin >> price;
+            passengers.push_back(make_shared<DiscountPass>(price));
+        }
+        else if (type == 3) {
+            double price;
+            cout << "Введите цену транспортной карты: ";
+            cin >> price;
+            passengers.push_back(make_shared<TransportCard>(price));
+        }
+        else if (type == 4) {
+            passengers.push_back(make_shared<Freeloader>());
+        }
+        else {
+            cout << "Неверный тип пассажира!" << endl;
+            --i; 
+        }
+    }
+}
+
+// Функция для подсчета выручки и количества пассажиров
+void calculateRevenue(const vector<shared_ptr<Passenger>>& passengers) {
+    double totalRevenue = 0.0;
+    int ticketCount = 0, discountCount = 0, cardCount = 0, freeloaderCount = 0;
+
+    for (const auto& passenger : passengers) {
+        totalRevenue += passenger->fare();
+        if (passenger->type() == "Ticket Passenger") {
+            ticketCount++;
+        }
+        else if (passenger->type() == "Discount Pass Passenger") {
+            discountCount++;
+        }
+        else if (passenger->type() == "Transport Card Passenger") {
+            cardCount++;
+        }
+        else if (passenger->type() == "Freeloader") {
+            freeloaderCount++;
+        }
+    }
+    cout << "Количество пассажиров с билетом: " << ticketCount << endl;
+    cout << "Количество пассажиров с льготной сезонкой: " << discountCount << endl;
+    cout << "Количество пассажиров с транспортной картой: " << cardCount << endl;
+    cout << "Количество зайцев: " << freeloaderCount << endl;
+    cout << "Общая выручка: " << totalRevenue << endl;
+}
+
+int main() {
+    setlocale(LC_ALL, "RUS");
+    //Часть 1
+    Expression* e1 = new Number(1.234);
+    Expression* e2 = new Number(-1.234);
+    Expression* e3 = new BinaryOperation(e1, BinaryOperation::DIV, e2);
+    cout << "Результат проверки:" << e3->evaluate() << endl;
+
+    delete e3; 
+
+    //Часть 2
+    Expression* n32 = new Number(32.0);
+    Expression* n16 = new Number(16.0);
+    Expression* minus = new BinaryOperation(n32, BinaryOperation::MINUS, n16);
+    Expression* callSqrt = new FunctionCall("sqrt", minus);
+    Expression* n2 = new Number(2.0);
+    Expression* mult = new BinaryOperation(n2, BinaryOperation::MUL, callSqrt);
+    Expression* callAbs = new FunctionCall("abs", mult);
+    cout << "Результат проверки: " << callAbs->evaluate() << endl;
+
+    delete callAbs; 
+
+    //Часть 3
+    vector<shared_ptr<Passenger>> passengers;
+    inputPassengers(passengers);
+    calculateRevenue(passengers);
+
+    return 0;
+}
