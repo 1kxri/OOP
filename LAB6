@@ -1,0 +1,107 @@
+// Point.h
+#pragma once
+#include <iostream>
+using namespace std;
+
+class Point {
+protected:
+    double x, y;
+public:
+    Point(double x = 0, double y = 0);
+    virtual ~Point() {}
+    virtual void print() const;
+    double getX() const;
+    double getY() const;
+    void setX(double x);
+    void setY(double y);
+};
+
+// Quadrilateral.h
+#pragma once
+#include "Point.h"
+
+class Quadrilateral : public Point {
+protected:
+    double width, height;
+public:
+    Quadrilateral(double x = 0, double y = 0, double width = 0, double height = 0);
+    virtual ~Quadrilateral() {}
+    virtual void print() const override;
+    double area() const;
+    double perimeter() const;
+    void setWidth(double width);
+    void setHeight(double height);
+};
+
+// Parallelepiped.h
+#pragma once
+#include "Quadrilateral.h"
+
+class Parallelepiped : public Quadrilateral {
+protected:
+    double depth;
+public:
+    Parallelepiped(double x = 0, double y = 0, double width = 0, double height = 0, double depth = 0);
+    virtual ~Parallelepiped() {}
+    virtual void print() const override;
+    double volume() const;
+    double surfaceArea() const;
+    void setDepth(double depth);
+};
+
+// Point.cpp
+#include "Point.h"
+
+Point::Point(double x, double y) : x(x), y(y) {}
+
+void Point::print() const {
+    cout << "Точка: (" << x << ", " << y << ")" << endl;
+}
+
+double Point::getX() const { return x; }
+double Point::getY() const { return y; }
+void Point::setX(double x) { this->x = x; }
+void Point::setY(double y) { this->y = y; }
+
+// Quadrilateral.cpp
+#include "Quadrilateral.h"
+
+Quadrilateral::Quadrilateral(double x, double y, double width, double height)
+    : Point(x, y), width(width), height(height) {}
+
+void Quadrilateral::print() const {
+    cout << "Четырехугольник с точкой привязки (" << x << ", " << y << ") и размерами: "
+        << "ширина = " << width << ", высота = " << height << endl;
+}
+
+double Quadrilateral::area() const { return width * height; }
+double Quadrilateral::perimeter() const { return 2 * (width + height); }
+void Quadrilateral::setWidth(double width) { this->width = width; }
+void Quadrilateral::setHeight(double height) { this->height = height; }
+
+// Parallelepiped.cpp
+#include "Parallelepiped.h"
+
+Parallelepiped::Parallelepiped(double x, double y, double width, double height, double depth)
+    : Quadrilateral(x, y, width, height), depth(depth) {}
+
+void Parallelepiped::print() const {
+    cout << "Параллелепипед с точкой привязки (" << x << ", " << y << ") и размерами: "
+        << "ширина = " << width << ", высота = " << height << ", глубина = " << depth << endl;
+}
+
+double Parallelepiped::volume() const { return width * height * depth; }
+double Parallelepiped::surfaceArea() const { return 2 * (width * height + width * depth + height * depth); }
+void Parallelepiped::setDepth(double depth) { this->depth = depth; }
+
+// main.cpp
+#include "Parallelepiped.h"
+
+int main() {
+    setlocale(LC_CTYPE, "");
+    Parallelepiped p(1, 2, 3, 4, 5);
+    p.print();
+    cout << "Объем: " << p.volume() << endl;
+    cout << "Площадь поверхности: " << p.surfaceArea() << endl;
+    return 0;
+}
