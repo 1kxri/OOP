@@ -1,1 +1,83 @@
-vvx
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+class Airline {
+private:
+    string name;
+    string icaoCode;
+    int fleetSize;
+public:
+    Airline(string name, string icaoCode, int fleetSize)
+        : name(name), icaoCode(icaoCode), fleetSize(fleetSize) {}
+
+    string getName() const { return name; }
+    string getIcaoCode() const { return icaoCode; }
+    int getFleetSize() const { return fleetSize; }
+};
+
+class Flight {
+protected:
+    Airline& airline;
+    string flightNumber;
+    string departureTime;
+    string arrivalTime;
+    string aircraftType;
+    bool isApproved;
+public:
+    Flight(Airline& airline, string flightNumber, string departureTime,
+        string arrivalTime, string aircraftType)
+        : airline(airline), flightNumber(flightNumber), departureTime(departureTime),
+        arrivalTime(arrivalTime), aircraftType(aircraftType), isApproved(false) {}
+
+    void requestSlot() {}
+    void approve() { isApproved = true; }
+
+    string getFlightNumber() const { return flightNumber; }
+    Airline& getAirline() const { return airline; }
+    string getDepartureTime() const { return departureTime; }
+    string getAircraftType() const { return aircraftType; }
+    bool getIsApproved() const { return isApproved; }
+};
+
+class SlotRequest : public Flight {
+private:
+    string applicationDate;
+    string status;
+public:
+    SlotRequest(Airline& airline, string flightNumber, string departureTime,
+        string arrivalTime, string aircraftType, string applicationDate)
+        : Flight(airline, flightNumber, departureTime, arrivalTime, aircraftType),
+        applicationDate(applicationDate), status("На рассмотрении") {}
+
+    void approve() { status = "Подтвержден"; Flight::approve(); }
+    void checkAvailability() {}
+
+    string getApplicationDate() const { return applicationDate; }
+    string getStatus() const { return status; }
+};
+
+class Airport {
+private:
+    vector<Airline*> airlines;
+    vector<Flight*> flights;
+    int runwayCount;
+public:
+    Airport(int runwayCount) : runwayCount(runwayCount) {}
+    ~Airport() {
+        for (auto flight : flights) {
+            delete flight;
+        }
+    }
+
+    void addAirline(Airline* airline) { airlines.push_back(airline); }
+    void processSlotRequest(Airline* airline, string flightNumber, string departureTime,
+        string arrivalTime, string aircraftType, string applicationDate) {
+        SlotRequest* request = new SlotRequest(*airline, flightNumber, departureTime,
+            arrivalTime, aircraftType, applicationDate);
+        flights.push_back(request);
+    }
+    void displayFlightSchedule() {}
+};
