@@ -1,7 +1,10 @@
 #include <iostream>
 #include <vector>
 #include <string>
-
+#include <memory>
+#include <fstream>
+#include <sstream>
+#include <windows.h>
 using namespace std;
 
 class Airline {
@@ -10,74 +13,342 @@ private:
     string icaoCode;
     int fleetSize;
 public:
-    Airline(string name, string icaoCode, int fleetSize)
+    Airline(string name = "", string icaoCode = "", int fleetSize = 0)
         : name(name), icaoCode(icaoCode), fleetSize(fleetSize) {}
 
     string getName() const { return name; }
     string getIcaoCode() const { return icaoCode; }
     int getFleetSize() const { return fleetSize; }
+
+    void displayInfo() const {
+        cout << name << " (" << icaoCode << "), самолетов: " << fleetSize << endl;
+    }
+
+    string toString() const {
+        return name + "," + icaoCode + "," + to_string(fleetSize);
+    }
+
+    static Airline fromString(const string& data) {
+        stringstream ss(data);
+        string name, code, fleetStr;
+        getline(ss, name, ',');
+        getline(ss, code, ',');
+        getline(ss, fleetStr, ',');
+        return Airline(name, code, stoi(fleetStr));
+    }
 };
 
 class Flight {
 protected:
-    Airline& airline;
+    string airlineName; // Сохраняем имя авиакомпании для сериализации
     string flightNumber;
     string departureTime;
     string arrivalTime;
     string aircraftType;
     bool isApproved;
 public:
-    Flight(Airline& airline, string flightNumber, string departureTime,
-        string arrivalTime, string aircraftType)
-        : airline(airline), flightNumber(flightNumber), departureTime(departureTime),
-        arrivalTime(arrivalTime), aircraftType(aircraftType), isApproved(false) {}
+    Flight(const string& airlineName, const string& flightNumber,
+        const string& departureTime, const string& arrivalTime,
+        const string& aircraftType, bool isApproved = false)
+        : airlineName(airlineName), flightNumber(flightNumber),
+        departureTime(departureTime), arrivalTime(arrivalTime),
+        aircraftType(aircraftType), isApproved(isApproved) {}
 
-    void requestSlot() {}
-    void approve() { isApproved = true; }
+    virtual void approve() { isApproved = true; }
 
     string getFlightNumber() const { return flightNumber; }
-    Airline& getAirline() const { return airline; }
-    string getDepartureTime() const { return departureTime; }
-    string getAircraftType() const { return aircraftType; }
-    bool getIsApproved() const { return isApproved; }
+    string getAirlineName() const { return airlineName; }
+    string getStatus() const { return isApproved ? "Подтвержден" : "На рассмотрении"; }
+
+    virtual void displayInfo() const {
+        cout << "Рейс " << flightNumber << " " << airlineName
+            << "\nВылет: " << departureTime << " Прилет: " << arrivalTime
+            << "\nТип ВС: " << aircraftType
+            << "\nСтатус: " << getStatus() << endl;
+    }
+
+    virtual string toString() const {
+        return airlineName + "," + flightNumber + "," + departureTime + "," +
+            arrivalTime + "," + aircraftType + "," + (isApproved ? "1" : "0");
+    }
+
+    static unique_ptr<Flight> fromString(const string& data) {
+        stringstream ss(data);
+        string airline, number, depTime, arrTime, acType, approvedStr;
+        getline(ss, airline, ',');
+        getline(ss, number, ',');
+        getline(ss, depTime, ',');
+        getline(ss, arrTime, ',');
+        getline(ss, acType, ',');
+        getline(ss, approvedStr, ',');
+        return make_unique<Flight>(airline, number, depTime, arrTime, acType, approvedStr == "1");
+    }
 };
 
 class SlotRequest : public Flight {
 private:
     string applicationDate;
-    string status;
 public:
-    SlotRequest(Airline& airline, string flightNumber, string departureTime,
-        string arrivalTime, string aircraftType, string applicationDate)
-        : Flight(airline, flightNumber, departureTime, arrivalTime, aircraftType),
-        applicationDate(applicationDate), status("На рассмотрении") {}
+    SlotRequest(const string& airlineName, const string& flightNumber,
+        const string& departureTime, const string& arrivalTime,
+        const string& aircraftType, const string& applicationDate)
+        : Flight(airlineName, flightNumber, departureTime, arrivalTime, aircraftType),
+        applicationDate(applicationDate) {}
 
-    void approve() { status = "Подтвержден"; Flight::approve(); }
-    void checkAvailability() {}
+    void displayInfo() const override {
+        Flight::displayInfo();
+        cout << "Дата заявки: " << applicationDate << endl;
+    }
 
-    string getApplicationDate() const { return applicationDate; }
-    string getStatus() const { return status; }
+    string toString() const override {
+        return "SLOT," + Flight::toString() + "," + applicationDate;
+    }
+
+    static unique_ptr<SlotRequest> fromString(const string& data) {
+        stringstream ss(data);
+        string type, airline, number, depTime, arrTime, acType, approvedStr, appDate;
+        getline(ss, type, ',');
+        getline(ss, airline, ',');
+        getline(ss, number, ',');
+        getline(ss, depTime, ',');
+        getline(ss, arrTime, ',');
+        getline(ss, acType, ',');
+        getline(ss, approvedStr, ',');
+        getline(ss, appDate, ',');
+        auto request = make_unique<SlotRequest>(airline, number, depTime, arrTime, acType, appDate);
+        if (approvedStr == "1") request->approve();
+        return request;
+    }
 };
 
 class Airport {
 private:
-    vector<Airline*> airlines;
-    vector<Flight*> flights;
+    vector<unique_ptr<Airline>> airlines;
+    vector<unique_ptr<Flight>> flights;
     int runwayCount;
+
+    Flight* findFlight(const string& flightNumber) {
+        for (auto& f : flights) {
+            if (f->getFlightNumber() == flightNumber) {
+                return f.get();
+            }
+        }
+        return nullptr;
+    }
+
+    Airline* findAirline(const string& name) {
+        for (auto& a : airlines) {
+            if (a->getName() == name) {
+                return a.get();
+            }
+        }
+        return nullptr;
+    }
+
 public:
-    Airport(int runwayCount) : runwayCount(runwayCount) {}
-    ~Airport() {
-        for (auto flight : flights) {
-            delete flight;
+    Airport(int runways) : runwayCount(runways) {}
+
+    void addAirline(unique_ptr<Airline> airline) {
+        airlines.push_back(move(airline));
+    }
+
+    void addFlight(unique_ptr<Flight> flight) {
+        flights.push_back(move(flight));
+    }
+
+    void processSlotRequest(const string& airlineName, const string& flightNumber,
+        const string& departureTime, const string& arrivalTime,
+        const string& aircraftType, const string& applicationDate) {
+        flights.push_back(make_unique<SlotRequest>(airlineName, flightNumber, departureTime,
+            arrivalTime, aircraftType, applicationDate));
+    }
+
+    void approveFlight(const string& flightNumber) {
+        Flight* flight = findFlight(flightNumber);
+        if (flight) {
+            flight->approve();
+            cout << "Рейс " << flightNumber << " подтвержден" << endl;
+        }
+        else {
+            cout << "Рейс не найден" << endl;
         }
     }
 
-    void addAirline(Airline* airline) { airlines.push_back(airline); }
-    void processSlotRequest(Airline* airline, string flightNumber, string departureTime,
-        string arrivalTime, string aircraftType, string applicationDate) {
-        SlotRequest* request = new SlotRequest(*airline, flightNumber, departureTime,
-            arrivalTime, aircraftType, applicationDate);
-        flights.push_back(request);
+    void displayAirlines() const {
+        cout << "\nАвиакомпании (" << airlines.size() << "):\n";
+        for (auto& a : airlines) {
+            a->displayInfo();
+        }
     }
-    void displayFlightSchedule() {}
+
+    void displayFlights() const {
+        cout << "\nРейсы (" << flights.size() << "):\n";
+        for (auto& f : flights) {
+            f->displayInfo();
+            cout << "------------------" << endl;
+        }
+    }
+
+    void displayFlightSchedule() const {
+        cout << "\nРасписание рейсов:\n";
+        for (auto& f : flights) {
+            cout << f->getFlightNumber() << " (" << f->getAirlineName() << ") - "
+                << f->getStatus() << endl;
+        }
+    }
+
+    void saveToFile(const string& filename) const {
+        ofstream file(filename);
+        if (!file) {
+            cerr << "Ошибка открытия файла для записи" << endl;
+            return;
+        }
+
+        // Сохраняем авиакомпании
+        file << "[AIRLINES]" << endl;
+        for (const auto& a : airlines) {
+            file << a->toString() << endl;
+        }
+
+        // Сохраняем рейсы
+        file << "[FLIGHTS]" << endl;
+        for (const auto& f : flights) {
+            file << f->toString() << endl;
+        }
+
+        file.close();
+        cout << "Данные сохранены в " << filename << endl;
+    }
+
+    void loadFromFile(const string& filename) {
+        ifstream file(filename);
+        if (!file) {
+            cerr << "Ошибка открытия файла для чтения" << endl;
+            return;
+        }
+
+        airlines.clear();
+        flights.clear();
+
+        string line;
+        string section;
+        while (getline(file, line)) {
+            if (line.empty()) continue;
+
+            if (line == "[AIRLINES]") {
+                section = "AIRLINES";
+            }
+            else if (line == "[FLIGHTS]") {
+                section = "FLIGHTS";
+            }
+            else {
+                if (section == "AIRLINES") {
+                    airlines.push_back(make_unique<Airline>(Airline::fromString(line)));
+                }
+                else if (section == "FLIGHTS") {
+                    if (line.find("SLOT,") == 0) {
+                        flights.push_back(SlotRequest::fromString(line.substr(5)));
+                    }
+                    else {
+                        flights.push_back(Flight::fromString(line));
+                    }
+                }
+            }
+        }
+
+        file.close();
+        cout << "Данные загружены из " << filename << endl;
+    }
 };
+
+void showMainMenu() {
+    cout << "\n==== Аэропорт ====\n";
+    cout << "1. Добавить авиакомпанию\n";
+    cout << "2. Показать авиакомпании\n";
+    cout << "3. Зарегистрировать рейс\n";
+    cout << "4. Показать все рейсы\n";
+    cout << "5. Подтвердить рейс\n";
+    cout << "6. Показать расписание\n";
+    cout << "7. Сохранить данные\n";
+    cout << "8. Загрузить данные\n";
+    cout << "0. Выход\n";
+    cout << "Выберите действие: ";
+}
+
+int main() {
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
+    Airport airport(2); // Аэропорт с 2 ВПП
+    const string dataFile = "airport_data.txt";
+
+    int choice;
+    do {
+        showMainMenu();
+        cin >> choice;
+        cin.ignore();
+
+        switch (choice) {
+        case 1: {
+            string name, code;
+            int fleet;
+            cout << "Название авиакомпании: ";
+            getline(cin, name);
+            cout << "Код ICAO: ";
+            getline(cin, code);
+            cout << "Количество самолетов: ";
+            cin >> fleet;
+            cin.ignore();
+
+            airport.addAirline(make_unique<Airline>(name, code, fleet));
+            break;
+        }
+        case 2:
+            airport.displayAirlines();
+            break;
+        case 3: {
+            string airlineName, number, depTime, arrTime, acType, appDate;
+            cout << "Название авиакомпании: ";
+            getline(cin, airlineName);
+            cout << "Номер рейса: ";
+            getline(cin, number);
+            cout << "Время вылета: ";
+            getline(cin, depTime);
+            cout << "Время прилета: ";
+            getline(cin, arrTime);
+            cout << "Тип ВС: ";
+            getline(cin, acType);
+            cout << "Дата заявки: ";
+            getline(cin, appDate);
+
+            airport.processSlotRequest(airlineName, number, depTime, arrTime, acType, appDate);
+            break;
+        }
+        case 4:
+            airport.displayFlights();
+            break;
+        case 5: {
+            string number;
+            cout << "Номер рейса для подтверждения: ";
+            getline(cin, number);
+            airport.approveFlight(number);
+            break;
+        }
+        case 6:
+            airport.displayFlightSchedule();
+            break;
+        case 7:
+            airport.saveToFile(dataFile);
+            break;
+        case 8:
+            airport.loadFromFile(dataFile);
+            break;
+        case 0:
+            cout << "Выход из программы..." << endl;
+            break;
+        default:
+            cout << "Неверный выбор!" << endl;
+        }
+    } while (choice != 0);
+
+    return 0;
+}
